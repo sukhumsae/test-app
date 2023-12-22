@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  postgresdb:
+    image: postgres
+    restart: unless-stopped
+    env_file: ./.env
+    environment:  #pass env parameter into postgres
+      - POSTGRES_USER=$POSTGRESDB_USER
+      - POSTGRES_PASSWORD=$POSTGRESDB_ROOT_PASSWORD
+      - POSTGRES_DB=$POSTGRESDB_DATABASE
+    ports:  #bound port on local machine with container port
+      - $POSTGRESDB_LOCAL_PORT:$POSTGRESDB_DOCKER_PORT
+    volumes:  #mount postgres data location into postgres container
+      - /Users/sukhum.sae/postgres-data:/var/lib/postgresql/data
+ 
+  app:
+    depends_on:
+      - postgresdb
+    build: ./
+    restart: unless-stopped
+    env_file: ./.env
+    ports:  #bound port on local machine with container port
+      - $NODE_LOCAL_PORT:$NODE_DOCKER_PORT
+    environment:  #pass env parameter into postgres
+      - DB_HOST=postgresdb  #database hostname might be same as postgresdb service
+      - DB_USER=$POSTGRESDB_USER
+      - DB_PASSWORD=$POSTGRESDB_ROOT_PASSWORD
+      - DB_NAME=$POSTGRESDB_DATABASE
+      - DB_PORT=$POSTGRESDB_DOCKER_PORT
+    stdin_open: true
+    tty: true
+
+  nginx:
+    depends_on:
+      - app
+    image: nginx:latest
+    container_name: reverse_proxy
+    restart: always
+    env_file: ./.env
+    ports:  #bound port on local machine with container port
+      - $NGINX_LOCAL_PORT:$NGINX_DOCKER_PORT
+    volumes:  #mount nginx configuration into nginx container
+      - ./nginx.conf:/etc/nginx/nginx.conf
