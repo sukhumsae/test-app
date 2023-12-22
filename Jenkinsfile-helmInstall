@@ -1,0 +1,19 @@
+pipeline {
+    agent any
+    environment {
+        KUBECONFIG = credentials('kubernetes-config')
+    }
+    stages {
+        stage('Cloning Git') {
+      steps {
+        git([url: 'https://github.com/sukhumsae/test-app.git', branch: 'main', credentialsId: ''])
+ 
+      }
+    }
+        stage('Deploy Helm chart') {
+            steps {
+                sh "helm install test-app -n test-app-prod . -f values.yaml"
+            }
+        }
+    }
+}
